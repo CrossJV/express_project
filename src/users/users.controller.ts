@@ -1,28 +1,34 @@
-import { Request, Response, NextFunction } from "express";
 import { BaseController } from "../common/base.controller";
 import { LoggerService } from "../logger/logger.service";
 import { IControllerRoute } from "../common/route.interface";
+import { HTTPError } from "../errors/http-error.class";
+import { inject, injectable } from "inversify";
+import { TYPES } from "../types";
+import { ILogger } from "../logger/logger.interface";
+import { IUsersController } from "./users.controller.interface";
+import { Request, Response, NextFunction } from "express";
 
-export class UserController extends BaseController {
-    private readonly userRoutes: IControllerRoute[] = [
+@injectable()
+export class UserController extends BaseController implements IUsersController {
+    readonly userRoutes: IControllerRoute[] = [
         {path: '/login', func: this.login, method: 'get'},
         {path: '/register', func: this.register, method: 'post'},
     ] 
 
     constructor(
-        logger: LoggerService
+        @inject(TYPES.ILogger) private loggerService: ILogger
     )
     {
-        super(logger)
+        super(loggerService)
         this.bindRoutes(this.userRoutes)
     } 
 
-    private login(req: Request, res: Response, next: NextFunction)
+    login(req: Request, res: Response, next: NextFunction)
     {
-        this.ok(res, 'login')
+        next(new HTTPError(401, 'AUTHORIZATION ERROR', 'login'))
     }
 
-    private register(req: Request, res: Response, next: NextFunction)
+    register(req: Request, res: Response, next: NextFunction)
     {
         this.ok(res, 'register')
     }
