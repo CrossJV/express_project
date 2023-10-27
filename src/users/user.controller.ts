@@ -10,12 +10,23 @@ import { UserLoginDto } from './dto/user-login.dto';
 import { UserRegisterDto } from './dto/user-register.dto';
 import { User } from './user.entity';
 import { IUserService } from './user.service.interface';
+import { ValidateMiddleware } from '../common/validate.middleware';
 
 @injectable()
 export class UserController extends BaseController implements IUserController {
 	readonly userRoutes: IControllerRoute[] = [
-		{ path: '/login', func: this.login, method: 'get' },
-		{ path: '/register', func: this.register, method: 'post' },
+		{
+			path: '/login',
+			func: this.login,
+			method: 'get',
+			middlewares: [new ValidateMiddleware(UserRegisterDto)],
+		},
+		{
+			path: '/register',
+			func: this.register,
+			method: 'post',
+			middlewares: [new ValidateMiddleware(UserRegisterDto)],
+		},
 	];
 
 	constructor(
