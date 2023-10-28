@@ -1,14 +1,27 @@
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { UserLoginDto } from './dto/user-login.dto';
 import { UserRegisterDto } from './dto/user-register.dto';
 import { User } from './user.entity';
 import { IUserService } from './user.service.interface';
+import { IConfigService } from '../config/config.service.interface';
+import { TYPES } from '../types';
+import { IUserRepository } from './users.repository.inteface';
+import { UserModel } from '@prisma/client';
 
 @injectable()
 export class UserService implements IUserService {
-	async createUser({ email, name, password }: UserRegisterDto): Promise<User | null> {
+	constructor(
+		@inject(TYPES.ConfigService) private configService: IConfigService,
+		@inject(TYPES.UsersRepository) private usersRepository: IUserRepository,
+	) {}
+	async createUser({ email, name, password }: UserRegisterDto): Promise<UserModel | null> {
 		const newUser = new User(email, name);
-		await newUser.setPassword(password);
+		const salt = this.configService.get('SALT');
+		await newUser.setPassword(password, Number(salt));
+		const existedUser = await this.usersRepository.find(email);
+		if (!existedUser) {
+			return this.usersRepository.create(newUser);
+		}
 		return null;
 	}
 	async validateUser(dto: UserLoginDto): Promise<boolean> {
