@@ -19,7 +19,7 @@ export class UserController extends BaseController implements IUserController {
 			path: '/login',
 			func: this.login,
 			method: 'get',
-			middlewares: [new ValidateMiddleware(UserRegisterDto)],
+			middlewares: [new ValidateMiddleware(UserLoginDto)],
 		},
 		{
 			path: '/register',
@@ -37,8 +37,17 @@ export class UserController extends BaseController implements IUserController {
 		this.bindRoutes(this.userRoutes);
 	}
 
-	login({ body }: Request<{}, {}, UserLoginDto>, res: Response, next: NextFunction): void {
-		next(new HTTPError(401, 'AUTHORIZATION ERROR', 'login'));
+	async login(
+		{ body }: Request<{}, {}, UserLoginDto>,
+		res: Response,
+		next: NextFunction,
+	): Promise<void> {
+		const result = await this.UserService.validateUser(body);
+
+		if (!result) {
+			return next(new HTTPError(401, 'AUTHORIZATION ERROR', 'login'));
+		}
+		this.ok(res, { res: result });
 	}
 
 	async register(
